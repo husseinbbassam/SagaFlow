@@ -17,6 +17,8 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - sagaflow-network
 
   rabbitmq:
     image: rabbitmq:3-management-alpine
@@ -32,6 +34,76 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - sagaflow-network
+
+  orderservice:
+    build:
+      context: .
+      dockerfile: src/SagaFlow.OrderService/Dockerfile
+    container_name: sagaflow-orderservice
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_URLS=http://+:8080
+      - ConnectionStrings__SagaDb=Host=postgres;Port=5432;Database=sagaflow;Username=postgres;Password=postgres
+      - RabbitMq__Host=rabbitmq
+      - RabbitMq__Username=guest
+      - RabbitMq__Password=guest
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - sagaflow-network
+    restart: unless-stopped
+
+  paymentservice:
+    build:
+      context: .
+      dockerfile: src/SagaFlow.PaymentService/Dockerfile
+    container_name: sagaflow-paymentservice
+    environment:
+      - DOTNET_ENVIRONMENT=Production
+      - RabbitMq__Host=rabbitmq
+      - RabbitMq__Username=guest
+      - RabbitMq__Password=guest
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - sagaflow-network
+    restart: unless-stopped
+
+  inventoryservice:
+    build:
+      context: .
+      dockerfile: src/SagaFlow.InventoryService/Dockerfile
+    container_name: sagaflow-inventoryservice
+    environment:
+      - DOTNET_ENVIRONMENT=Production
+      - RabbitMq__Host=rabbitmq
+      - RabbitMq__Username=guest
+      - RabbitMq__Password=guest
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - sagaflow-network
+    restart: unless-stopped
 
 volumes:
   postgres-data:
+
+networks:
+  sagaflow-network:
+    driver: bridge
+
