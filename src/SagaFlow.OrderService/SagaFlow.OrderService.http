@@ -1,0 +1,6 @@
+@SagaFlow.OrderService_HostAddress = http://localhost:5279
+
+GET {{SagaFlow.OrderService_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
