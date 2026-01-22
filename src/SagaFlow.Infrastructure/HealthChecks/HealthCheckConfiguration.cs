@@ -33,7 +33,7 @@ public static class HealthCheckConfiguration
                     UserName = rabbitMqUsername,
                     Password = rabbitMqPassword
                 };
-                return factory.CreateConnectionAsync().GetAwaiter().GetResult();
+                return Task.Run(async () => await factory.CreateConnectionAsync()).GetAwaiter().GetResult();
             },
             name: "rabbitmq",
             tags: new[] { "messaging", "rabbitmq" });
