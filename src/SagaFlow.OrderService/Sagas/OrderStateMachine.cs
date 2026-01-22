@@ -39,6 +39,7 @@ public class OrderStateMachine : MassTransitStateMachine<OrderState>
                     context.Saga.CustomerId = context.Message.CustomerId;
                     context.Saga.TotalAmount = context.Message.TotalAmount;
                     context.Saga.CreatedAt = context.Message.Timestamp;
+                    context.Saga.OrderItemsJson = System.Text.Json.JsonSerializer.Serialize(context.Message.Items);
                 })
                 .Send(context => new ProcessPayment(
                     context.Message.OrderId,
@@ -55,8 +56,8 @@ public class OrderStateMachine : MassTransitStateMachine<OrderState>
                 })
                 .Send(context => new ReserveInventory(
                     context.Message.OrderId,
-                    context.Saga.CorrelationId == context.Message.OrderId 
-                        ? [] 
+                    !string.IsNullOrEmpty(context.Saga.OrderItemsJson)
+                        ? System.Text.Json.JsonSerializer.Deserialize<List<OrderItem>>(context.Saga.OrderItemsJson) ?? []
                         : [],
                     DateTime.UtcNow))
                 .TransitionTo(ReservingInventory),

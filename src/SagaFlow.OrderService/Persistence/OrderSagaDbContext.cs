@@ -29,6 +29,7 @@ public class OrderStateMap : IEntityTypeConfiguration<OrderState>
         entity.Property(x => x.TransactionId).HasMaxLength(128);
         entity.Property(x => x.ReservationId).HasMaxLength(128);
         entity.Property(x => x.FailureReason).HasMaxLength(512);
+        entity.Property(x => x.OrderItemsJson).HasColumnType("jsonb");
         
         entity.HasIndex(x => x.CustomerId);
         entity.HasIndex(x => x.CreatedAt);
